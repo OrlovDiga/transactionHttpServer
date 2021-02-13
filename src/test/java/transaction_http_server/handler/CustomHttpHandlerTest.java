@@ -24,10 +24,10 @@ import static transaction_http_server.constant.NetworkConstant.*;
 /**
  * @author Orlov Diga
  */
-@RunWith(MockitoJUnitRunner.class)
+//@RunWith(MockitoJUnitRunner.class)
 public class CustomHttpHandlerTest {
 
-    private static final String ROOT = "/" + ROOT_PATH;
+ /*   private static final String ROOT = "/" + ROOT_PATH;
     private static final int TEST_COUNT = 100;
     private static final int CREATED_BALANCE_COUNT = 100;
 
@@ -104,5 +104,5 @@ public class CustomHttpHandlerTest {
 
     private int random() {
         return new Random().nextInt(1000) + 100;
-    }
+    }*/
 }

@@ -28,15 +28,15 @@ public class CustomHttpHandler implements HttpHandler {
     private static final short URL_WORDS_COUNT = 3;
 
     private final BalanceService service;
-    private final ObjectMapper mapper;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public CustomHttpHandler() {
-        mapper = new ObjectMapper();
+        //mapper = new ObjectMapper();
         service = new BalanceServiceImpl();
     }
 
     public CustomHttpHandler(BalanceService service) {
-        mapper = new ObjectMapper();
+        //mapper = new ObjectMapper();
         this.service = service;
     }
 
@@ -57,6 +57,7 @@ public class CustomHttpHandler implements HttpHandler {
             @SneakyThrows
             @Override
             public void run() {
+                ObjectMapper threadMapper = new ObjectMapper();
                 switch (exchange.getRequestMethod()) {
                     case GET_REQUEST: {
                         if (action.equals(FIND_PATH)) {
@@ -67,7 +68,7 @@ public class CustomHttpHandler implements HttpHandler {
                             } catch (EntityNotFoundException ex) {
                                 handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                             }
-                            String json = mapper.writeValueAsString(foundBalance);
+                            String json = threadMapper.writeValueAsString(foundBalance);
                             handleResponse(exchange, json, SUCCESS);
                         }
                     }
@@ -77,7 +78,7 @@ public class CustomHttpHandler implements HttpHandler {
                             case CREATE_PATH: {
                                 LOG.info("create request");
                                 Balance createdBalance = service.createBalance();
-                                String json = mapper.writeValueAsString(createdBalance);
+                                String json = threadMapper.writeValueAsString(createdBalance);
                                 handleResponse(exchange, json, CREATED);
                             }
                             break;
@@ -90,7 +91,7 @@ public class CustomHttpHandler implements HttpHandler {
                                 } catch (EntityNotFoundException ex) {
                                     handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
-                                String json = mapper.writeValueAsString(updatedBalance);
+                                String json = threadMapper.writeValueAsString(updatedBalance);
                                 handleResponse(exchange, json, SUCCESS);
                             }
                             break;
@@ -103,7 +104,7 @@ public class CustomHttpHandler implements HttpHandler {
                                 } catch (EntityNotFoundException | InsufficientFundsException ex) {
                                     handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
-                                String json = mapper.writeValueAsString(updatedBalance);
+                                String json = threadMapper.writeValueAsString(updatedBalance);
                                 handleResponse(exchange, json, SUCCESS);
                             }
                             break;
@@ -130,7 +131,8 @@ public class CustomHttpHandler implements HttpHandler {
         //check content-type
         String contentType = exchange.getRequestHeaders().getFirst(CONTENT_TYPE);
         boolean error = false;
-        if (contentType == null || !contentType.equals(JSON_TYPE)) {
+        if ((contentType == null || !contentType.equals(JSON_TYPE))
+                && !exchange.getRequestURI().getPath().contains(CREATE_PATH)) {
             LOG.info("Invalid content type");
             handleResponse(exchange, getErrorJsonMsg("Invalid content type"), BAD_REQUEST);
             error =  true;
