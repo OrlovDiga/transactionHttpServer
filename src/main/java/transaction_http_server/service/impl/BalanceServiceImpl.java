@@ -13,6 +13,10 @@ public class BalanceServiceImpl implements BalanceService {
 
     private final BalanceRepo balanceRepo;
 
+    public BalanceServiceImpl(BalanceRepo repo) {
+        balanceRepo = repo;
+    }
+
     public BalanceServiceImpl() {
         balanceRepo = new BalanceRepo();
     }

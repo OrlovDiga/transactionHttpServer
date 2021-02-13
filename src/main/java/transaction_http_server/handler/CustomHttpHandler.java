@@ -13,10 +13,9 @@ import transaction_http_server.service.impl.BalanceServiceImpl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 
+import static transaction_http_server.constant.NetworkConstant.*;
 import static transaction_http_server.constant.StatusCode.*;
 
 /**
@@ -36,6 +35,11 @@ public class CustomHttpHandler implements HttpHandler {
         service = new BalanceServiceImpl();
     }
 
+    public CustomHttpHandler(BalanceService service) {
+        mapper = new ObjectMapper();
+        this.service = service;
+    }
+
     public void handle(HttpExchange exchange) throws IOException {
         String action = checkAndGetActions(exchange);
         if (action == null) {
@@ -44,7 +48,7 @@ public class CustomHttpHandler implements HttpHandler {
         InputStream body = exchange.getRequestBody();
 
         Balance balance = null;
-        if (!action.equals("create")) {
+        if (!action.equals(CREATE_PATH)) {
             balance = mapper.readValue(body, Balance.class);
         }
 
@@ -54,8 +58,8 @@ public class CustomHttpHandler implements HttpHandler {
             @Override
             public void run() {
                 switch (exchange.getRequestMethod()) {
-                    case "GET": {
-                        if (action.equals("find")) {
+                    case GET_REQUEST: {
+                        if (action.equals(FIND_PATH)) {
                             LOG.info("find request");
                             Balance foundBalance = null;
                             try {
@@ -68,41 +72,37 @@ public class CustomHttpHandler implements HttpHandler {
                         }
                     }
                     break;
-                    case "POST": {
+                    case POST_REQUEST: {
                         switch (action) {
-                            case "create": {
+                            case CREATE_PATH: {
                                 LOG.info("create request");
                                 Balance createdBalance = service.createBalance();
                                 String json = mapper.writeValueAsString(createdBalance);
                                 handleResponse(exchange, json, CREATED);
                             }
                             break;
-                            case "increase": {
+                            case INCREASE_PATH: {
                                 LOG.info("increase request");
                                 Balance updatedBalance = null;
-
                                 try {
                                     updatedBalance =
                                             service.increaseBalance(finalBalance.getId(), finalBalance.getMoneyAmount());
                                 } catch (EntityNotFoundException ex) {
                                     handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
-
                                 String json = mapper.writeValueAsString(updatedBalance);
                                 handleResponse(exchange, json, SUCCESS);
                             }
                             break;
-                            case "reduce": {
+                            case REDUCE_PATH: {
                                 LOG.info("reduce request");
                                 Balance updatedBalance = null;
-
                                 try {
                                     updatedBalance =
                                             service.reduceBalance(finalBalance.getId(), finalBalance.getMoneyAmount());
                                 } catch (EntityNotFoundException | InsufficientFundsException ex) {
                                     handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
-
                                 String json = mapper.writeValueAsString(updatedBalance);
                                 handleResponse(exchange, json, SUCCESS);
                             }
@@ -114,7 +114,8 @@ public class CustomHttpHandler implements HttpHandler {
                         }
                     }
                     break;
-                    case "DELETE": {
+                    case DELETE_REQUEST: {
+                        if (DELETE_PATH.equals(action))
                         LOG.info("delete request");
                         service.removeBalance(finalBalance.getId());
                         handleResponse(exchange, "", SUCCESS);
@@ -127,9 +128,9 @@ public class CustomHttpHandler implements HttpHandler {
     @SneakyThrows
     private String checkAndGetActions(final HttpExchange exchange) {
         //check content-type
-        String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+        String contentType = exchange.getRequestHeaders().getFirst(CONTENT_TYPE);
         boolean error = false;
-        if (contentType == null || !contentType.equals("application/json")) {
+        if (contentType == null || !contentType.equals(JSON_TYPE)) {
             LOG.info("Invalid content type");
             handleResponse(exchange, getErrorJsonMsg("Invalid content type"), BAD_REQUEST);
             error =  true;
@@ -150,8 +151,7 @@ public class CustomHttpHandler implements HttpHandler {
                                        final int code)  throws  IOException {
         OutputStream outputStream = httpExchange.getResponseBody();
 
-
-        httpExchange.getResponseHeaders().set("Content-Type", "application/json");
+        httpExchange.getResponseHeaders().set(CONTENT_TYPE, JSON_TYPE);
         httpExchange.sendResponseHeaders(code, body.length());
         outputStream.write(body.getBytes());
         outputStream.flush();

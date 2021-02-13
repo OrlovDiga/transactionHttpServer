@@ -8,7 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BalanceRepo {
 
-    private Map<String, Balance> db = new ConcurrentHashMap<>();
+    private final Map<String, Balance> db;
+
+    public BalanceRepo() {
+        db = new ConcurrentHashMap<>();
+    }
 
     public Optional<Balance> findById(String id) {
         Balance balance = db.get(id);
