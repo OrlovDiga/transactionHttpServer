@@ -27,10 +27,6 @@ public class CustomHttpHandler implements HttpHandler {
 
     private static final Logger LOG = Logger.getLogger("CustomHttpHandler");
     private static final short URL_WORDS_COUNT = 3;
-    private static final Set<Integer> statusError = new HashSet<>(){{
-        add(400);
-        add(404);
-    }};
 
     private final BalanceService service;
     private final ObjectMapper mapper;
@@ -65,7 +61,7 @@ public class CustomHttpHandler implements HttpHandler {
                             try {
                                 foundBalance = service.findById(finalBalance.getId());
                             } catch (EntityNotFoundException ex) {
-                                handleResponse(exchange, ex.getMessage(), BAD_REQUEST);
+                                handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                             }
                             String json = mapper.writeValueAsString(foundBalance);
                             handleResponse(exchange, json, SUCCESS);
@@ -89,7 +85,7 @@ public class CustomHttpHandler implements HttpHandler {
                                     updatedBalance =
                                             service.increaseBalance(finalBalance.getId(), finalBalance.getMoneyAmount());
                                 } catch (EntityNotFoundException ex) {
-                                    handleResponse(exchange, ex.getMessage(), BAD_REQUEST);
+                                    handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
 
                                 String json = mapper.writeValueAsString(updatedBalance);
@@ -104,7 +100,7 @@ public class CustomHttpHandler implements HttpHandler {
                                     updatedBalance =
                                             service.reduceBalance(finalBalance.getId(), finalBalance.getMoneyAmount());
                                 } catch (EntityNotFoundException | InsufficientFundsException ex) {
-                                    handleResponse(exchange, ex.getMessage(), BAD_REQUEST);
+                                    handleResponse(exchange, getErrorJsonMsg(ex.getMessage()), BAD_REQUEST);
                                 }
 
                                 String json = mapper.writeValueAsString(updatedBalance);
@@ -112,7 +108,7 @@ public class CustomHttpHandler implements HttpHandler {
                             }
                             break;
                             default: {
-                                handleResponse(exchange, "Invalid url.", BAD_REQUEST);
+                                handleResponse(exchange, getErrorJsonMsg("Invalid url."), BAD_REQUEST);
                                 System.out.println("error");
                             }
                         }
@@ -129,20 +125,20 @@ public class CustomHttpHandler implements HttpHandler {
     }
 
     @SneakyThrows
-    private static String checkAndGetActions(final HttpExchange exchange) {
+    private String checkAndGetActions(final HttpExchange exchange) {
         //check content-type
         String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
         boolean error = false;
         if (contentType == null || !contentType.equals("application/json")) {
             LOG.info("Invalid content type");
-            handleResponse(exchange, "Invalid content type", BAD_REQUEST);
+            handleResponse(exchange, getErrorJsonMsg("Invalid content type"), BAD_REQUEST);
             error =  true;
         }
         //check url
         String[] pathArr = exchange.getRequestURI().getPath().split("/");
         if (pathArr.length != URL_WORDS_COUNT) {
             LOG.info("Invalid url.");
-            handleResponse(exchange, "Invalid url", NOT_FOUND);
+            handleResponse(exchange, getErrorJsonMsg("Invalid url"), NOT_FOUND);
             error = true;
         }
 
@@ -154,14 +150,15 @@ public class CustomHttpHandler implements HttpHandler {
                                        final int code)  throws  IOException {
         OutputStream outputStream = httpExchange.getResponseBody();
 
-        if (statusError.contains(code)) {
-            //httpExchange.sendResponseHeaders(code, 0);
-        } else {
-            httpExchange.getResponseHeaders().set("Content-Type", "application/json");
-        }
+
+        httpExchange.getResponseHeaders().set("Content-Type", "application/json");
         httpExchange.sendResponseHeaders(code, body.length());
         outputStream.write(body.getBytes());
         outputStream.flush();
         outputStream.close();
+    }
+
+    private String getErrorJsonMsg(String msg) {
+        return mapper.createObjectNode().put("error_msg", msg).toPrettyString();
     }
 }
