@@ -14,7 +14,7 @@ Use the maven
 git clone git@github.com:OrlovDiga/transactionHttpServer.git
 cd PROJECT_ROOT
 mvn clean package
-java -jar transaction_http_server-1.0-SNAPSHOT-jar-with-dependencies.jar
+java -jar target/transaction_http_server-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ## Usage
