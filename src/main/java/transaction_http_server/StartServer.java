@@ -32,13 +32,12 @@ public class StartServer {
 
             //get the property value and print it out
             port = Integer.parseInt(prop.getProperty("app.port"));
-            hostIp = prop.getProperty("app.host");
 
         } catch (IOException ex) {
             ex.printStackTrace();
         }
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(hostIp, port), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/" + ROOT_PATH, new CustomHttpHandler());
         server.start();
     }

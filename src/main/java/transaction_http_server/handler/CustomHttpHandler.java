@@ -13,6 +13,8 @@ import transaction_http_server.service.impl.BalanceServiceImpl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Logger;
 
 import static transaction_http_server.constant.NetworkConstant.*;
@@ -26,18 +28,22 @@ public class CustomHttpHandler implements HttpHandler {
 
     private static final Logger LOG = Logger.getLogger("CustomHttpHandler");
     private static final short URL_WORDS_COUNT = 3;
+    private static final short THREAD_COUNT = 4;
 
     private final BalanceService service;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
+    private ThreadPoolExecutor executor;
 
     public CustomHttpHandler() {
-        //mapper = new ObjectMapper();
+        mapper = new ObjectMapper();
         service = new BalanceServiceImpl();
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREAD_COUNT);
     }
 
     public CustomHttpHandler(BalanceService service) {
-        //mapper = new ObjectMapper();
+        mapper = new ObjectMapper();
         this.service = service;
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(THREAD_COUNT);
     }
 
     public void handle(HttpExchange exchange) throws IOException {
@@ -53,7 +59,7 @@ public class CustomHttpHandler implements HttpHandler {
         }
 
         final Balance finalBalance = balance;
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @SneakyThrows
             @Override
             public void run() {
@@ -123,7 +129,7 @@ public class CustomHttpHandler implements HttpHandler {
                     }
                 }
             }
-        }).start();
+        });
     }
 
     @SneakyThrows
