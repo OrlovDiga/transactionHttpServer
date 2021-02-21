@@ -1,0 +1,17 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+Client -> HttpServers: getRequest
+HttpServers -> Handler: handle
+Handler -> executor: execute
+executor -> newThread: start
+newThread -> BalanceService: execute
+BalanceService -> BalanceRepo: execute something
+BalanceRepo -> db: do something
+db -> BalanceRepo: did something
+BalanceRepo -> BalanceService: executed something
+BalanceService -> newThread: executed
+newThread -> Client: send Response
+
+@enduml
