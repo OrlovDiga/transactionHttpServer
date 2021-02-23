@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.Properties;
+import java.util.Scanner;
 
 import static transaction_http_server.constant.NetworkConstant.ROOT_PATH;
 
@@ -40,5 +41,15 @@ public class StartServer {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/" + ROOT_PATH, new CustomHttpHandler());
         server.start();
+
+        Scanner in = new Scanner(System.in);
+        while (in.hasNextLine()) {
+            String command = in.nextLine();
+            if (command.equals("\\q")) {
+                server.stop(0);
+                in.close();
+                System.exit(0);
+            }
+        }
     }
 }

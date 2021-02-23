@@ -10,4 +10,9 @@ public class InsufficientFundsException extends RuntimeException {
               " does not have enough funds to withdraw " + deductibleAmountMoney +
               " The current amount of money in the balance " + currentAmountMoney);
     }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return null;
+    }
 }

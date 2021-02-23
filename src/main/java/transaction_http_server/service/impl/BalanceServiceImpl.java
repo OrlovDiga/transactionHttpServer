@@ -22,36 +22,65 @@ public class BalanceServiceImpl implements BalanceService {
     }
 
     @Override
-    public Balance createBalance() {
-        return balanceRepo.create();
+    public synchronized Balance createBalance() {
+        Balance balance = null;
+        try {
+            balance = (Balance) balanceRepo.create().clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
+        return balance;
     }
 
     @Override
-    public Balance findById(String id) {
-        return balanceRepo.findById(id)
+    public synchronized Balance findById(String id) {
+        Balance foundBalance = balanceRepo.findById(id)
                 .orElseThrow(() -> {throw new EntityNotFoundException(Balance.class, "id", id);});
+        Balance cloneFoundBalance = null;
+        try {
+            cloneFoundBalance = (Balance) foundBalance.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
+        return cloneFoundBalance;
     }
 
     @Override
-    public void removeBalance(String balanceId) {
+    public synchronized void removeBalance(String balanceId) {
         balanceRepo.delete(balanceId);
     }
 
     @Override
-    public Balance reduceBalance(String balanceId, long sum) {
-        Balance balance = findById(balanceId);
-        long newMoneyAmount = balance.getMoneyAmount() - sum;
+    public synchronized Balance reduceBalance(String balanceId, long sum) {
+        Balance foundBalance = findById(balanceId);
+        long newMoneyAmount = foundBalance.getMoneyAmount() - sum;
         if (newMoneyAmount < 0) {
-            throw new InsufficientFundsException(balance.getId(), sum, balance.getMoneyAmount());
+            throw new InsufficientFundsException(foundBalance.getId(), sum, foundBalance.getMoneyAmount());
         }
-        balance.setMoneyAmount(newMoneyAmount);
-        return balanceRepo.update(balance);
+        foundBalance.setMoneyAmount(newMoneyAmount);
+        Balance updatedBalance = null;
+        try {
+            updatedBalance = (Balance) balanceRepo.update(foundBalance).clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
+        return updatedBalance;
     }
 
     @Override
-    public Balance increaseBalance(String balanceId, long sum) {
-        Balance balance = findById(balanceId);
-        balance.setMoneyAmount(balance.getMoneyAmount() + sum);
-        return balanceRepo.update(balance);
+    public synchronized Balance increaseBalance(String balanceId, long sum) {
+        Balance foundBalance = findById(balanceId);
+        foundBalance.setMoneyAmount(foundBalance.getMoneyAmount() + sum);
+        Balance updatedBalance = null;
+        try {
+            updatedBalance = (Balance) balanceRepo.update(foundBalance).clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+
+        return updatedBalance;
     }
 }

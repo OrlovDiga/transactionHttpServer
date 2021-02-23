@@ -9,4 +9,9 @@ public class EntityNotFoundException extends RuntimeException {
         super(generateMessage(clazz.getSimpleName(),
                 toMap(String.class, String.class, searchParamsMap), " not found by parameters"));
     }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return null;
+    }
 }

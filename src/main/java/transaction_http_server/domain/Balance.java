@@ -8,7 +8,7 @@ import java.util.UUID;
 @Setter
 @ToString
 @EqualsAndHashCode
-public final class Balance {
+public final class Balance implements Cloneable {
     private String id;
     private long moneyAmount;
     private boolean isActive;
@@ -20,5 +20,10 @@ public final class Balance {
 
     public static Balance create() {
         return new Balance();
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }
