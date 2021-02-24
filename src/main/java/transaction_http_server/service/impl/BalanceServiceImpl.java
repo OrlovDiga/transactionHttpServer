@@ -23,6 +23,7 @@ public class BalanceServiceImpl implements BalanceService {
 
     @Override
     public synchronized Balance createBalance() {
+
         Balance balance = null;
         try {
             balance = (Balance) balanceRepo.create().clone();
